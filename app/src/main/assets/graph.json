@@ -1,0 +1,31 @@
+{
+  "nodes": {
+    "Bedroom_A": {"id": "01", "name": "Adams Bedroom", "type": "room"},
+    "Landing": {"id": "02", "name": "Upstairs Landing", "type": "hallway"},
+    "Bedroom_B": {"id": "03", "name": "Parents Bedroom", "type": "room"},
+    "Bedroom_C": {"id": "04", "name": "Spare Bedroom", "type": "room"},
+    "Hallway": {"id": "06", "name": "Downstairs Hallway", "type": "hallway"},
+    "Kitchen": {"id": "07", "name": "Kitchen", "type": "room"},
+    "L_Room": {"id": "08", "name": "Living Room", "type": "room"}
+  },
+  "edges": [
+    {"from": "01", "to": "02", "visualDescription": "White door with clothes hung on door"},
+    {"from": "02", "to": "01", "visualDescription": "White door with 'Bedroom_A' QR code"},
+
+    {"from": "02", "to": "03", "visualDescription": "White door with 'Bedroom_B' QR code"},
+    {"from": "03", "to": "02", "visualDescription": "White door with 'Landing' QR code"},
+
+    {"from": "02", "to": "04", "visualDescription": "White door with 'Bedroom_C' QR code"},
+    {"from": "04", "to": "02", "visualDescription": "White door with 'Landing' QR code"},
+
+    {"from": "02", "to": "06", "visualDescription": "Cream staircase with white bannister leading down"},
+    {"from": "06", "to": "02", "visualDescription": "Stairs leading up with cream carpet and white bannister"},
+
+    {"from": "06", "to": "07", "visualDescription": "White door with 'Kitchen' QR code"},
+    {"from": "07", "to": "06", "visualDescription": "White door with 'Hallway' QR code"},
+
+    {"from": "06", "to": "08", "visualDescription": "White door with 'L_Room' QR code"},
+    {"from": "08", "to": "06", "visualDescription": "White door with 'Hallway' QR code"}
+  ]
+}
+
