@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -32,6 +33,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.sightlinev3.camera.QrAnalyzer
 import com.example.sightlinev3.graph.GraphRepository
 import com.example.sightlinev3.graph.GraphViewModel
 import com.example.sightlinev3.graph.GraphViewModelFactory
@@ -91,7 +93,6 @@ fun CameraScreen() {
  */
 @Composable
 fun CameraPreview() {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     AndroidView(
@@ -104,7 +105,7 @@ fun CameraPreview() {
             previewView.post {
                 /* Get the camera system, this accesses the device cameras and lifecycle control
                , and is also async 'Future'                                                 */
-                val cameraProvideFuture = ProcessCameraProvider.getInstance(context)
+                val cameraProvideFuture = ProcessCameraProvider.getInstance(ctx)
 
                 // Wait until Camera is ready
                 cameraProvideFuture.addListener({
@@ -114,6 +115,21 @@ fun CameraPreview() {
                     val preview = Preview.Builder().build()
                     preview.setSurfaceProvider(previewView.surfaceProvider)
 
+                    // Build image analyzer to send frames to the backend
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+
+                    val analyzer = QrAnalyzer { qrValue ->
+                        // send to viewmodel later
+                    }
+
+                    // attach the 'QrAnalyzer' class
+                    imageAnalysis.setAnalyzer(
+                        ContextCompat.getMainExecutor(ctx),
+                        analyzer
+                    )
+
                     // Choose which camera to use on the device
                     val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
@@ -122,9 +138,10 @@ fun CameraPreview() {
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
-                        preview
+                        preview,
+                        imageAnalysis
                     )
-                }, ContextCompat.getMainExecutor(context))
+                }, ContextCompat.getMainExecutor(ctx))
             }
             previewView
         }
