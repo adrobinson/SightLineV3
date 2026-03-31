@@ -9,9 +9,13 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
     private val graph by lazy { repository.loadGraphFromAssets() }
     private val service by lazy { GraphService(graph) }
 
-    fun runPathfinding(start: String, goal: String): String {
-        val path = service.findPath(graph, start, goal)
-        return path?.joinToString(" - > ") ?: "No path found"
+    fun runPathfinding(start: String, goal: String): List<PathStep>? {
+        val path = service.findPath(start, goal)
+        if(path != null){
+            val pathSteps = service.buildPathDetails(path);
+            return pathSteps
+        }
+        return null
     }
 
 
