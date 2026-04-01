@@ -1,6 +1,14 @@
 package com.example.sightlinev3.graph
 import kotlinx.serialization.Serializable
 
+
+
+@Serializable
+data class GraphDto(
+    val nodes: Map<String, Node>,
+    val edges: List<Edge>
+)
+
 @Serializable
 data class Node(
     val id: String,
@@ -12,11 +20,11 @@ data class Node(
 data class Edge(
     val from: String,
     val to: String,
-    val visualDescription: String
+    val description: String
 )
 
 @Serializable
 data class Graph(
-    val nodes: List<Node>,
-    val edges: List<Edge>
+    val nodes: Map<String, Node>,
+    val adjacency: Map<String, List<Edge>>
 )

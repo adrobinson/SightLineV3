@@ -18,6 +18,7 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
         val path = service.findPath(start, goal)
         if(path != null){
             val pathSteps = service.buildPathDetails(path);
+            Log.d("VIEW_MODEL",pathSteps.toString())
             return pathSteps
         }
         return null
@@ -25,7 +26,7 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
 
     fun onQrScanned(nodeId: String) {
         if (_currentNode.value?.id == nodeId) return
-        val node = graph.nodes.find { it.id == nodeId };
+        val node = graph.nodes[nodeId];
 
         if(node != null){
             _currentNode.value = node

@@ -17,9 +17,9 @@ class GraphService(private val graph: Graph) {
             if (node !in visited) {
                 visited.add(node)
 
-                val neighbours = graph.edges
-                    .filter { it.from == node }
-                    .map { it.to }
+                val neighbours = graph.adjacency[node]
+                    ?.map { it.to }
+                    ?: emptyList()
 
                 for (neighbour in neighbours) {
                     val newPath = path + neighbour
@@ -35,13 +35,10 @@ class GraphService(private val graph: Graph) {
      * that include contextual information about the nodes
      */
     fun buildPathDetails(path: List<String>): List<PathStep> {
-        val nodesById = graph.nodes.associateBy { it.id }
-
         val result = mutableListOf<PathStep>();
 
         for (i in path.indices) {
-            val nodeId = path[i]
-            val node = nodesById[nodeId]!!
+            val node = graph.nodes[path[i]]!!
 
             /**
              * We don't need a visual description of the room we are in,
@@ -52,7 +49,7 @@ class GraphService(private val graph: Graph) {
                 null
             } else {
                 val prev = path[i - 1]
-                graph.edges.find { it.from == prev && it.to == nodeId }?.visualDescription
+                graph.adjacency[prev]?.find { it.to == node.id }?.description
             }
 
             result.add(
@@ -60,7 +57,7 @@ class GraphService(private val graph: Graph) {
                     id = node.id,
                     name = node.name,
                     type = node.type,
-                    visualDescription = visual
+                    description = visual
                 )
             )
 

@@ -10,6 +10,13 @@ class GraphRepository(private val context: Context) {
             .bufferedReader()
             .use { it.readText() }
 
-        return Json.decodeFromString(jsonString)
+        val dto = Json.decodeFromString<GraphDto>(jsonString)
+
+        val adjacency = dto.edges.groupBy { it.from }
+
+        return Graph(
+            nodes = dto.nodes,
+            adjacency = adjacency
+        )
     }
 }

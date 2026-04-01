@@ -4,5 +4,5 @@ data class PathStep(
     val id: String,
     val name: String,
     val type: String,
-    val visualDescription: String?
+    val description: String?
 )
