@@ -22,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,7 +41,7 @@ import com.example.sightlinev3.graph.GraphViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: GraphViewModel by viewModels {
+    private val graphViewModel: GraphViewModel by viewModels {
         GraphViewModelFactory(GraphRepository(this)) // Inject the repository dependency through the factory
     }
 
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            CameraScreen()
+            CameraScreen(graphViewModel)
         }
     }
 }
@@ -63,8 +64,10 @@ fun GraphScreen(onRunPathfinding: () -> Unit) {
 }
 
 @Composable
-fun CameraScreen() {
+fun CameraScreen(graphViewModel: GraphViewModel) {
     val permission = Manifest.permission.CAMERA
+
+    val currentNode by graphViewModel.currentNode.collectAsState()
 
     var hasPermission by remember { mutableStateOf(false) }
 
@@ -80,10 +83,11 @@ fun CameraScreen() {
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Red)) {
         if(hasPermission){
-            CameraPreview()
+            CameraPreview(graphViewModel)
         } else {
             Text("Camera permission required")
         }
+        Text(text = currentNode?.name ?: "No location")
     }
 
 }
@@ -92,7 +96,7 @@ fun CameraScreen() {
  * Setup the Camera View UI
  */
 @Composable
-fun CameraPreview() {
+fun CameraPreview(graphViewModel: GraphViewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     AndroidView(
@@ -121,7 +125,7 @@ fun CameraPreview() {
                         .build()
 
                     val analyzer = QrAnalyzer { qrValue ->
-                        // send to viewmodel later
+                        graphViewModel.onQrScanned(qrValue)
                     }
 
                     // attach the 'QrAnalyzer' class

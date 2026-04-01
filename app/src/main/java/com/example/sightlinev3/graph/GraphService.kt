@@ -35,7 +35,7 @@ class GraphService(private val graph: Graph) {
      * that include contextual information about the nodes
      */
     fun buildPathDetails(path: List<String>): List<PathStep> {
-        val nodesById = graph.nodes.values.associateBy { it.id }
+        val nodesById = graph.nodes.associateBy { it.id }
 
         val result = mutableListOf<PathStep>();
 

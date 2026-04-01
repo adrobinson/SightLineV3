@@ -17,6 +17,6 @@ data class Edge(
 
 @Serializable
 data class Graph(
-    val nodes: Map<String, Node>,
+    val nodes: List<Node>,
     val edges: List<Edge>
 )

@@ -1,13 +1,13 @@
 {
-  "nodes": {
-    "Bedroom_A": {"id": "01", "name": "Adams Bedroom", "type": "room"},
-    "Landing": {"id": "02", "name": "Upstairs Landing", "type": "hallway"},
-    "Bedroom_B": {"id": "03", "name": "Parents Bedroom", "type": "room"},
-    "Bedroom_C": {"id": "04", "name": "Spare Bedroom", "type": "room"},
-    "Hallway": {"id": "06", "name": "Downstairs Hallway", "type": "hallway"},
-    "Kitchen": {"id": "07", "name": "Kitchen", "type": "room"},
-    "L_Room": {"id": "08", "name": "Living Room", "type": "room"}
-  },
+  "nodes": [
+    {"id": "01", "name": "Adams Bedroom", "type": "room"},
+    {"id": "02", "name": "Upstairs Landing", "type": "hallway"},
+    {"id": "03", "name": "Parents Bedroom", "type": "room"},
+    {"id": "04", "name": "Spare Bedroom", "type": "room"},
+    {"id": "06", "name": "Downstairs Hallway", "type": "hallway"},
+    {"id": "07", "name": "Kitchen", "type": "room"},
+    {"id": "08", "name": "Living Room", "type": "room"}
+  ],
   "edges": [
     {"from": "01", "to": "02", "visualDescription": "White door with clothes hung on door"},
     {"from": "02", "to": "01", "visualDescription": "White door with 'Bedroom_A' QR code"},

@@ -12,6 +12,11 @@ class QrAnalyzer (private val onQRDetected: (String) -> Unit ) : ImageAnalysis.A
 
     private val scanner = BarcodeScanning.getClient()
 
+    /**
+     * Process the image using the Google ML Kit to
+     * scan for QR codes, call the lambda with the raw
+     * QR value as the argument, this calls 'graphViewModel.onQrScanned()'
+     */
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
         val mediaImage = image.image
