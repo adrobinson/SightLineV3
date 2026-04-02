@@ -5,6 +5,11 @@ import kotlinx.serialization.json.Json
 
 class GraphRepository(private val context: Context) {
 
+    /**
+     * Maps Graph from JSON file to GraphDto, then from there maps
+     * to Graph object with adjacency map: easier lookup for
+     * neighbors of a particular node
+     */
     fun loadGraphFromAssets(): Graph {
         val jsonString = context.assets.open("graph.json")
             .bufferedReader()

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "712713756678",
+    "project_id": "sightlinev3",
+    "storage_bucket": "sightlinev3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712713756678:android:6eb59cef35b9eee24ae387",
+        "android_client_info": {
+          "package_name": "com.example.sightlinev3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEW54Epa_SDXFC-Sy0_uTFEgwbc_mlvHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

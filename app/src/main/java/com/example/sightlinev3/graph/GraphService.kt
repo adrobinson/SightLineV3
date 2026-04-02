@@ -2,6 +2,9 @@ package com.example.sightlinev3.graph
 
 class GraphService(private val graph: Graph) {
 
+    /**
+     * Standard BFS algorithm
+     */
     fun findPath(start: String, goal: String): List<String>? {
         val queue = ArrayDeque<List<String>>()
         val visited = mutableSetOf<String>()
