@@ -14,7 +14,6 @@ interface LlmService {
             modelName = "gemini-2.5-flash",
             generationConfig = generationConfig {
                 temperature = 0.3f
-                maxOutputTokens = 200
             },
             systemInstruction = content {
                 text("""

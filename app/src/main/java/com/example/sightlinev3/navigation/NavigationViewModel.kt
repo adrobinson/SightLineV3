@@ -22,6 +22,10 @@ class NavigationViewModel (
     private val _hintState = MutableStateFlow<HintState>(HintState.Idle)
     val hintState: StateFlow<HintState> = _hintState
 
+    /**
+     * Call the functions in LLM Service
+     */
+
     fun describeEnvironment(image: Bitmap){
         viewModelScope.launch {
             _hintState.value = HintState.Loading
@@ -29,6 +33,17 @@ class NavigationViewModel (
                 HintState.Success(llmService.describeEnvironment(image))
             } catch (e: Exception) {
                 HintState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun describeWithQuery(image: Bitmap, userQuery: String){
+        viewModelScope.launch {
+            _hintState.value = HintState.Loading
+            _hintState.value = try {
+                HintState.Success(llmService.describeWithUserQuery(image, userQuery))
+            } catch (e: Exception) {
+                HintState.Error(e.message ?: "Unknown Error")
             }
         }
     }

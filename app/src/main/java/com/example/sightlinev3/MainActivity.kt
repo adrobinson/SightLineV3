@@ -1,7 +1,9 @@
 package com.example.sightlinev3
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -82,6 +84,32 @@ class MainActivity : ComponentActivity() {
             contract = ActivityResultContracts.RequestPermission()
         ) { isGranted -> hasPermission = isGranted }
 
+        // Speech-To-Text launcher
+        // launches when user finished speaking
+        val sttLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val spokenText = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull() ?: return@rememberLauncherForActivityResult
+
+            val capture = imageCaptureRef.value ?: return@rememberLauncherForActivityResult
+
+            capture.takePicture(
+                ContextCompat.getMainExecutor(this@MainActivity),
+                object : ImageCapture.OnImageCapturedCallback() {
+                    override fun onCaptureSuccess(image: ImageProxy) {
+                        val bitmap = image.toBitmap()
+                        image.close()
+                        navigationViewModel.describeWithQuery(bitmap, spokenText)
+                    }
+                    override fun onError(e: ImageCaptureException) {
+                        e.printStackTrace()
+                    }
+                }
+            )
+        }
+
         LaunchedEffect(Unit) {
             launcher.launch(permission)
         }
@@ -141,6 +169,18 @@ class MainActivity : ComponentActivity() {
                     )
                 }) {
                     Text("Describe Surroundings")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = {
+                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask a question")
+                    }
+                    sttLauncher.launch(intent)
+                }) {
+                    Text("Ask a question")
                 }
             }
         }
