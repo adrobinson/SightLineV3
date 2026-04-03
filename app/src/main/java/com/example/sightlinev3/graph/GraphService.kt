@@ -68,5 +68,22 @@ class GraphService(private val graph: Graph) {
         return result
     }
 
+    /**
+     * Try to find the node that the user wants to go to by matching the name
+     * or query
+     */
+    fun findNodeByName(query: String): Node? {
+        val normalised = query.lowercase().trim()
+
+        return graph.nodes.values.firstOrNull { node ->
+            val nameMatch = normalised.contains(node.name.lowercase())
+            val aliasMatch = node.aliases.any { alias ->
+                normalised.contains(alias.lowercase())
+            }
+            nameMatch || aliasMatch
+        }
+    }
+
+
 
 }

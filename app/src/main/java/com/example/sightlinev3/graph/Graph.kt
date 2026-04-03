@@ -13,7 +13,8 @@ data class GraphDto(
 data class Node(
     val id: String,
     val name: String,
-    val type: String
+    val type: String,
+    val aliases: List<String> = emptyList()
 )
 
 @Serializable

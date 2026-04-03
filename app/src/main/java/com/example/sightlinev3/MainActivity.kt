@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognizerIntent
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -43,6 +44,7 @@ import com.example.sightlinev3.camera.QrAnalyzer
 import com.example.sightlinev3.graph.GraphRepository
 import com.example.sightlinev3.graph.GraphViewModel
 import com.example.sightlinev3.graph.GraphViewModelFactory
+import com.example.sightlinev3.graph.RouteState
 import com.example.sightlinev3.navigation.NavigationViewModelFactory
 import com.example.sightlinev3.llm.GeminiLlmService
 import com.example.sightlinev3.navigation.HintState
@@ -76,6 +78,7 @@ class MainActivity : ComponentActivity() {
         val permission = Manifest.permission.CAMERA
         val currentNode by graphViewModel.currentNode.collectAsState()
         val hintState by navigationViewModel.hintState.collectAsState()
+        val routeState by graphViewModel.routeState.collectAsState()
 
         var hasPermission by remember { mutableStateOf(false) }
         val imageCaptureRef = remember { mutableStateOf<ImageCapture?>(null) }
@@ -84,8 +87,9 @@ class MainActivity : ComponentActivity() {
             contract = ActivityResultContracts.RequestPermission()
         ) { isGranted -> hasPermission = isGranted }
 
-        // Speech-To-Text launcher
-        // launches when user finished speaking
+        /**
+         * STT Launcher for general queries
+         */
         val sttLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
         ) { result ->
@@ -110,6 +114,20 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+        /**
+         * STT Launcher for starting a route
+         */
+        val destinationSttLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val spokenText = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull() ?: return@rememberLauncherForActivityResult
+
+            Log.d("STT", "Destination query: $spokenText")
+            graphViewModel.startNavigation(spokenText)
+        }
+
         LaunchedEffect(Unit) {
             launcher.launch(permission)
         }
@@ -123,12 +141,37 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            /**
+             * Route state feedback
+             */
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .align(Alignment.BottomCenter)
+            ) {
+                // Route state feedback
+                when (val route = routeState) {
+                    is RouteState.Idle -> {}
+                    is RouteState.Error -> Text(route.message, color = Color.Red)
+                    is RouteState.Active -> {
+                        Text(
+                            "Navigating to: ${route.destination.name}",
+                            color = Color.Green
+                        )
+                        Text(
+                            "${route.steps.size} steps",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             /**
-             * Image Capture text and button, shows the user:
-             * - the state the API is currently in, as well as success and error messsages
-             * - what node the user is currently localized at
-             * - a button to capture an image and send to Gemini API
+             * Hint state feedback
              */
             Column(
                 modifier = Modifier
@@ -151,6 +194,9 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                /**
+                 * Button for sending image to API with no query
+                 */
                 Button(onClick = {
                     val capture = imageCaptureRef.value ?: return@Button
                     capture.takePicture(
@@ -173,6 +219,9 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                /**
+                 * Button for sending speech-to-text queries to API
+                 */
                 Button(onClick = {
                     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -181,6 +230,21 @@ class MainActivity : ComponentActivity() {
                     sttLauncher.launch(intent)
                 }) {
                     Text("Ask a question")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                /**
+                 * Button used when asking for a route
+                 */
+                Button(onClick = {
+                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_PROMPT, "Where do you want to go?")
+                    }
+                    destinationSttLauncher.launch(intent)
+                }) {
+                    Text("Where do you want to go?")
                 }
             }
         }

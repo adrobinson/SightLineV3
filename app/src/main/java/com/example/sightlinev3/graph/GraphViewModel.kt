@@ -13,6 +13,11 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
     private val service by lazy { GraphService(graph) }
     private val _currentNode = MutableStateFlow<Node?>(null)
     val currentNode: StateFlow<Node?> = _currentNode
+    private val _currentStepIndex = MutableStateFlow(0)
+    val currentStepIndex: StateFlow<Int> = _currentStepIndex
+
+    private val _routeState = MutableStateFlow<RouteState>(RouteState.Idle)
+    val routeState: StateFlow<RouteState> = _routeState
 
     /**
      * Invokes graphService to run pathfinding, this returns a list of
@@ -25,7 +30,6 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
         val path = service.findPath(start, goal)
         if(path != null){
             val pathSteps = service.buildPathDetails(path);
-            Log.d("VIEW_MODEL",pathSteps.toString())
             return pathSteps
         }
         return null
@@ -45,6 +49,51 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
         } else {
             Log.d("GRAPH_VM", "Invalid QR: $nodeId")
         }
+    }
+
+    /**
+     * This function is ran when the user asks to go to a new destination, the speech-to-text
+     * query is passed into the function, we validate: The user is localized at a Node, we can find
+     * the room the user is asking to go to, and there is a route between the two nodes
+     *
+     * A path is then built and 'RouteState' is made active
+     */
+    fun startNavigation(query:String){
+        val start = _currentNode.value
+        if(start == null) {
+            _routeState.value = RouteState.Error("You haven't localised yet - scan a valid location first")
+            return
+        }
+
+        val destination = service.findNodeByName(query)
+        if(destination == null){
+            _routeState.value = RouteState.Error("Can't find that room")
+            return
+        }
+
+        if(destination!!.id == start.id){
+            _routeState.value = RouteState.Error("You're already there")
+            return
+        }
+
+        val path = service.findPath(start.id, destination.id)
+        if(path == null) {
+            _routeState.value = RouteState.Error("No path found to ${destination.name}")
+            return
+        }
+
+        val steps = service.buildPathDetails(path)
+        _currentStepIndex.value = 0
+        Log.d("GRAPH_VM", "Route found: ${steps.map {it.name}}")
+        _routeState.value = RouteState.Active(
+            destination = destination,
+            steps = steps
+        )
+    }
+
+    fun clearRoute() {
+        _routeState.value = RouteState.Idle
+        _currentStepIndex.value = 0
     }
 
 

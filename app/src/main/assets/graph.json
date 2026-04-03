@@ -1,12 +1,12 @@
 {
   "nodes": {
-    "01": { "id": "01", "name": "Adams Bedroom", "type": "room" },
-    "02": { "id": "02", "name": "Upstairs Landing", "type": "hallway" },
-    "03": { "id": "03", "name": "Parents Bedroom", "type": "room" },
-    "04": { "id": "04", "name": "Spare Bedroom", "type": "room" },
-    "06": { "id": "06", "name": "Downstairs Hallway", "type": "hallway" },
-    "07": { "id": "07", "name": "Kitchen", "type": "room" },
-    "08": { "id": "08", "name": "Living Room", "type": "room" }
+    "01": { "id": "01", "name": "Adams Bedroom", "type": "room", "aliases": ["adam's room", "adams room", "bedroom a", "my room"] },
+    "02": { "id": "02", "name": "Upstairs Landing", "type": "hallway", "aliases": ["landing", "upstairs", "upstairs hallway"] },
+    "03": { "id": "03", "name": "Parents Bedroom", "type": "room", "aliases": ["parents room", "mum and dads room", "main bedroom"]},
+    "04": { "id": "04", "name": "Spare Bedroom", "type": "room", "aliases": ["spare room", "guest room", "bedroom c"] },
+    "06": { "id": "06", "name": "Downstairs Hallway", "type": "hallway",  "aliases": ["hallway", "downstairs", "front hallway"] },
+    "07": { "id": "07", "name": "Kitchen", "type": "room", "aliases": ["the kitchen"] },
+    "08": { "id": "08", "name": "Living Room", "type": "room", "aliases": ["lounge", "the living room", "front room", "sitting room"] }
   },
   "edges": [
     { "from": "01", "to": "02", "description": "White door with clothes hung on door" },
