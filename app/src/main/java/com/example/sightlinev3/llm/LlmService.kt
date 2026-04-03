@@ -1,6 +1,7 @@
 package com.example.sightlinev3.llm
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
@@ -19,7 +20,7 @@ interface LlmService {
                 text("""
                     You are a navigation assistant for blind and visually impaired users.
                     Describe surroundings clearly using non-visual spatial references.
-                    Be concise — no more than 3 sentences.
+                    Be concise — no more than 4 sentences.
                     Never say 'I can see' — instead say 'In front of you' or 'In the left of the frame'.
                     Don't use any formatting characters
                 """.trimIndent())
@@ -29,12 +30,24 @@ interface LlmService {
     /**
      * Use case 1: Camera only
      */
-    suspend fun describeEnvironment(image: Bitmap): String {
+    suspend fun describeEnvironment(image: Bitmap, routeContext: String?): String {
         return try {
+            /**
+             * Tailors prompt to give context if the user is currently navigating a route or not
+             */
+            val prompt = if (routeContext != null){
+                """
+                    The user is navigating. ${routeContext}
+                    look for the visual cue and point out any immediate hazards
+                """.trimIndent()
+            } else {
+                "Describe any objects or hazards in front of the user, aswell as any doorways/entrances"
+            }
+            Log.d("USER_PROMPT",prompt)
             val response = model.generateContent(
                 content {
                     image(image)
-                    text("Describe any objects or hazards that are directly in front of the user")
+                    text(prompt)
                 }
             )
             response.text ?: "No description available"
@@ -46,12 +59,22 @@ interface LlmService {
     /**
      *  Use case 2: Camera + Text-to-Speech
      */
-    suspend fun describeWithUserQuery(image: Bitmap, userQuery: String): String {
+    suspend fun describeWithUserQuery(image: Bitmap, userQuery: String, routeContext: String?): String {
         return try {
+            val prompt = if (routeContext != null) {
+                """
+                    The user is navigating. $routeContext
+                    The user asked: $userQuery
+                    Answer using what you can see in the image, keeping the route in mind
+                """.trimIndent()
+            } else {
+                "The user asked \"$userQuery\". Answer using what you can see in the image"
+            }
+            Log.d("USER_PROMPT",prompt)
             val response = model.generateContent(
                 content{
                     image(image)
-                    text("The user asked \"$userQuery\". Answer using what you can see in the image")
+                    text(prompt)
                 }
             )
             response.text ?: "No Response"

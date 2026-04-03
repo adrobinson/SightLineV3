@@ -26,22 +26,22 @@ class NavigationViewModel (
      * Call the functions in LLM Service
      */
 
-    fun describeEnvironment(image: Bitmap){
+    fun describeEnvironment(image: Bitmap, routeContext: String?){
         viewModelScope.launch {
             _hintState.value = HintState.Loading
             _hintState.value = try {
-                HintState.Success(llmService.describeEnvironment(image))
+                HintState.Success(llmService.describeEnvironment(image, routeContext))
             } catch (e: Exception) {
                 HintState.Error(e.message ?: "Unknown error")
             }
         }
     }
 
-    fun describeWithQuery(image: Bitmap, userQuery: String){
+    fun describeWithQuery(image: Bitmap, userQuery: String, routeContext: String?){
         viewModelScope.launch {
             _hintState.value = HintState.Loading
             _hintState.value = try {
-                HintState.Success(llmService.describeWithUserQuery(image, userQuery))
+                HintState.Success(llmService.describeWithUserQuery(image, userQuery, routeContext))
             } catch (e: Exception) {
                 HintState.Error(e.message ?: "Unknown Error")
             }

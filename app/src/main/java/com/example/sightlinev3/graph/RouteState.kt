@@ -9,5 +9,6 @@ sealed class RouteState {
         val destination: Node,
         val steps: List<PathStep>
     ) : RouteState()
+    data class Reached(val destination: Node) : RouteState()
     data class Error(val message: String): RouteState()
 }

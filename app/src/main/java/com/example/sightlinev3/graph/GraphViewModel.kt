@@ -40,6 +40,28 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
      * with any nodeIds, if it is we set currentNode to that node.
      */
     fun onQrScanned(nodeId: String) {
+        val currentRoute = _routeState.value
+
+        if(currentRoute is RouteState.Active) {
+            // If in route mode - only accept the next expected node
+            val nextExpectedNode = currentRoute.steps.getOrNull(_currentStepIndex.value + 1)
+
+            if(nextExpectedNode?.id == nodeId) {
+                _currentStepIndex.value++
+                _currentNode.value = graph.nodes[nodeId]
+                Log.d("GRAPH_VM", "Advanced to step ${_currentStepIndex.value}")
+
+                //Check if destination is reached
+                if(currentStepIndex.value == currentRoute.steps.size - 1) {
+                    Log.d("GRAPH_VM", "Destination reached")
+                    _routeState.value = RouteState.Reached(currentRoute.destination)
+                }
+            } else {
+                Log.d("GRAPH_VM", "Wrong node scanned in route mode, ignoring")
+            }
+            return
+        }
+
         if (_currentNode.value?.id == nodeId) return
         val node = graph.nodes[nodeId];
 
@@ -84,7 +106,7 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
 
         val steps = service.buildPathDetails(path)
         _currentStepIndex.value = 0
-        Log.d("GRAPH_VM", "Route found: ${steps.map {it.name}}")
+        Log.d("GRAPH_VM", "Route found: ${steps.map {it.description}}")
         _routeState.value = RouteState.Active(
             destination = destination,
             steps = steps

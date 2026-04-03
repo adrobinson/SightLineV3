@@ -79,9 +79,24 @@ class MainActivity : ComponentActivity() {
         val currentNode by graphViewModel.currentNode.collectAsState()
         val hintState by navigationViewModel.hintState.collectAsState()
         val routeState by graphViewModel.routeState.collectAsState()
+        val currentStepIndex by graphViewModel.currentStepIndex.collectAsState()
 
         var hasPermission by remember { mutableStateOf(false) }
         val imageCaptureRef = remember { mutableStateOf<ImageCapture?>(null) }
+
+        /**
+         * Build route context string from current state
+         */
+        val routeContext = when (val route = routeState) {
+            is RouteState.Active -> {
+                val currentStep = route.steps.getOrNull(currentStepIndex)
+                val nextStep = route.steps.getOrNull(currentStepIndex + 1)
+                "currently at ${currentStep?.name}." +
+                        "next checkpoint: ${nextStep?.name}." +
+                        "visual cue for route: ${nextStep?.description}."
+            }
+            else -> null
+        }
 
         val launcher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
@@ -105,7 +120,7 @@ class MainActivity : ComponentActivity() {
                     override fun onCaptureSuccess(image: ImageProxy) {
                         val bitmap = image.toBitmap()
                         image.close()
-                        navigationViewModel.describeWithQuery(bitmap, spokenText)
+                        navigationViewModel.describeWithQuery(bitmap, spokenText, routeContext)
                     }
                     override fun onError(e: ImageCaptureException) {
                         e.printStackTrace()
@@ -161,10 +176,14 @@ class MainActivity : ComponentActivity() {
                             color = Color.Green
                         )
                         Text(
-                            "${route.steps.size} steps",
+                            "Step ${currentStepIndex + 1} / ${route.steps.size}",
                             color = Color.White
                         )
                     }
+                    is RouteState.Reached -> Text(
+                        "You have arrived at ${route.destination.name}!",
+                        color = Color.Green
+                    )
                 }
             }
 
@@ -205,7 +224,7 @@ class MainActivity : ComponentActivity() {
                             override fun onCaptureSuccess(image: ImageProxy) {
                                 val bitmap = image.toBitmap()
                                 image.close()
-                                navigationViewModel.describeEnvironment(bitmap)
+                                navigationViewModel.describeEnvironment(bitmap, routeContext)
                             }
 
                             override fun onError(e: ImageCaptureException) {
