@@ -47,4 +47,15 @@ class NavigationViewModel (
             }
         }
     }
+
+    fun describeAtCheckpoint(image: Bitmap, routeContext: String) {
+        viewModelScope.launch {
+            _hintState.value = HintState.Loading
+            _hintState.value = try {
+                HintState.Success(llmService.describeAtCheckpoint(image, routeContext))
+            } catch (e: Exception){
+                HintState.Error(e.message ?: "Unknown Error")
+            }
+        }
+    }
 }

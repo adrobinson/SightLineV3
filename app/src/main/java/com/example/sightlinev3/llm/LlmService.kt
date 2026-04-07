@@ -31,6 +31,7 @@ interface LlmService {
      * Use case 1: Camera only
      */
     suspend fun describeEnvironment(image: Bitmap, routeContext: String?): String {
+        Log.d("LLM SERVICE", "Request Sent")
         return try {
             /**
              * Tailors prompt to give context if the user is currently navigating a route or not
@@ -86,14 +87,14 @@ interface LlmService {
     /**
      * Use case 3: route mode QR scan
      */
-    suspend fun describeAtCheckpoint(image: Bitmap, nodeId: String): String {
+    suspend fun describeAtCheckpoint(image: Bitmap, routeContext: String): String {
         return try {
             val response = model.generateContent(
                 content {
                     image(image)
                     text("""
-                        QR code $nodeId identified. This is the next checkpoint on the user's route.
-                        Describe any objects or hazards in front of the user.
+                        $routeContext
+                        look for the visual cue and point out any immediate hazards
                     """.trimIndent())
                 }
             )

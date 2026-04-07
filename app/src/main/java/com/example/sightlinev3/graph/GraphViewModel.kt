@@ -3,8 +3,12 @@ package com.example.sightlinev3.graph
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
@@ -18,6 +22,8 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
 
     private val _routeState = MutableStateFlow<RouteState>(RouteState.Idle)
     val routeState: StateFlow<RouteState> = _routeState
+    private val _checkpointReached = MutableSharedFlow<PathStep>()
+    val checkpointReached: SharedFlow<PathStep> = _checkpointReached
 
     /**
      * Invokes graphService to run pathfinding, this returns a list of
@@ -47,9 +53,9 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
             val nextExpectedNode = currentRoute.steps.getOrNull(_currentStepIndex.value + 1)
 
             if(nextExpectedNode?.id == nodeId) {
-                _currentStepIndex.value++
-                _currentNode.value = graph.nodes[nodeId]
-                Log.d("GRAPH_VM", "Advanced to step ${_currentStepIndex.value}")
+                viewModelScope.launch {
+                    _checkpointReached.emit(nextExpectedNode)
+                }
 
                 //Check if destination is reached
                 if(currentStepIndex.value == currentRoute.steps.size - 1) {
@@ -72,6 +78,18 @@ class GraphViewModel(private val repository: GraphRepository) : ViewModel() {
             Log.d("GRAPH_VM", "Invalid QR: $nodeId")
         }
     }
+
+    fun advanceStep(nodeId: String) {
+        _currentNode.value = graph.nodes[nodeId]
+        _currentStepIndex.value++
+        Log.d("GRAPH_VM", "Advanced to step ${_currentStepIndex.value}")
+
+        val currentRoute = _routeState.value as? RouteState.Active ?: return
+        if(_currentStepIndex.value == currentRoute.steps.size - 1){
+            _routeState.value = RouteState.Reached(currentRoute.destination)
+        }
+    }
+
 
     /**
      * This function is ran when the user asks to go to a new destination, the speech-to-text

@@ -49,6 +49,14 @@ import com.example.sightlinev3.navigation.NavigationViewModelFactory
 import com.example.sightlinev3.llm.GeminiLlmService
 import com.example.sightlinev3.navigation.HintState
 import com.example.sightlinev3.navigation.NavigationViewModel
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,8 +89,21 @@ class MainActivity : ComponentActivity() {
         val routeState by graphViewModel.routeState.collectAsState()
         val currentStepIndex by graphViewModel.currentStepIndex.collectAsState()
 
+        val isLoading = hintState is HintState.Loading
         var hasPermission by remember { mutableStateOf(false) }
         val imageCaptureRef = remember { mutableStateOf<ImageCapture?>(null) }
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            LocalContext.current.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun vibrate() {
+            vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
+
 
         /**
          * Build route context string from current state
@@ -96,6 +117,35 @@ class MainActivity : ComponentActivity() {
                         "visual cue for route: ${nextStep?.description}."
             }
             else -> null
+        }
+
+        /**
+         * Capture image when next checkpoint QR Code is seen
+         */
+        LaunchedEffect(Unit) {
+            graphViewModel.checkpointReached.collect { step ->
+                if(navigationViewModel.hintState.value is HintState.Loading) return@collect
+                graphViewModel.advanceStep(step.id)
+                val capture = imageCaptureRef.value ?: return@collect
+                val routeContext = "Scanned Entrance To ${step.name}" +
+                        ", Visual description: ${step.description}"
+
+                capture.takePicture(
+                    ContextCompat.getMainExecutor(this@MainActivity),
+                    object : ImageCapture.OnImageCapturedCallback() {
+                        override fun onCaptureSuccess(image: ImageProxy) {
+                            val bitmap = image.toBitmap()
+                            image.close()
+                            vibrate()
+                            navigationViewModel.describeAtCheckpoint(bitmap, routeContext)
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            Log.e("CHECKPOINT", "Capture failed: ${exception.message}")
+                        }
+                    }
+                )
+            }
         }
 
         val launcher = rememberLauncherForActivityResult(
@@ -120,6 +170,7 @@ class MainActivity : ComponentActivity() {
                     override fun onCaptureSuccess(image: ImageProxy) {
                         val bitmap = image.toBitmap()
                         image.close()
+                        vibrate()
                         navigationViewModel.describeWithQuery(bitmap, spokenText, routeContext)
                     }
                     override fun onError(e: ImageCaptureException) {
@@ -224,6 +275,7 @@ class MainActivity : ComponentActivity() {
                             override fun onCaptureSuccess(image: ImageProxy) {
                                 val bitmap = image.toBitmap()
                                 image.close()
+                                vibrate()
                                 navigationViewModel.describeEnvironment(bitmap, routeContext)
                             }
 
@@ -232,7 +284,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     )
-                }) {
+                },
+                    enabled = !isLoading
+                ) {
                     Text("Describe Surroundings")
                 }
 
@@ -247,7 +301,9 @@ class MainActivity : ComponentActivity() {
                         putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask a question")
                     }
                     sttLauncher.launch(intent)
-                }) {
+                },
+                    enabled = !isLoading
+                ) {
                     Text("Ask a question")
                 }
 
@@ -262,7 +318,9 @@ class MainActivity : ComponentActivity() {
                         putExtra(RecognizerIntent.EXTRA_PROMPT, "Where do you want to go?")
                     }
                     destinationSttLauncher.launch(intent)
-                }) {
+                },
+                    enabled = !isLoading
+                ) {
                     Text("Where do you want to go?")
                 }
             }
