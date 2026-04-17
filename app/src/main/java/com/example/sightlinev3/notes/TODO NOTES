@@ -1,4 +1,2 @@
-Whilst api is responding/thinking, should we be able to scan qr code (bare in mind that we want to implement sending
-auto request to gemini when scanned)
-manual requests to api should be denied whilst api is responding (buttons shouldnt work)
-just think of operations that need to be async
+add text to speech
+redo ui, make more accessible

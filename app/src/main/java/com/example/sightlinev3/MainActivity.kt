@@ -54,9 +54,25 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.content.Context
 import android.os.Build
+import android.speech.tts.TextToSpeech
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import java.util.Locale
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,10 +114,34 @@ class MainActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             LocalContext.current.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+        val context = LocalContext.current
+        val tts = remember {
+            TextToSpeech(context, null).apply {
+                language = Locale.UK  // or Locale.US
+            }
+        }
+
+        DisposableEffect(Unit) {
+            onDispose { tts.shutdown() }
+        }
 
         @RequiresApi(Build.VERSION_CODES.O)
         fun vibrate() {
             vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
+
+        /**
+         * Speak whenever a new successful response arrives
+         */
+        LaunchedEffect(hintState) {
+            if (hintState is HintState.Success) {
+                tts.speak(
+                    (hintState as HintState.Success).text,
+                    TextToSpeech.QUEUE_FLUSH,  // interrupts any current speech
+                    null,
+                    "hint_utterance"
+                )
+            }
         }
 
 
@@ -199,133 +239,227 @@ class MainActivity : ComponentActivity() {
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
+
+            // ── Camera feed fills screen ──────────────────────────────────
             if (hasPermission) {
                 CameraPreview(
                     graphViewModel = graphViewModel,
                     onImageCaptureReady = { imageCaptureRef.value = it }
-
                 )
             }
 
-            /**
-             * Route state feedback
-             */
-
-            Column(
+            // ── Dark scrim at top for status text ─────────────────────────
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .align(Alignment.BottomCenter)
-            ) {
-                // Route state feedback
-                when (val route = routeState) {
-                    is RouteState.Idle -> {}
-                    is RouteState.Error -> Text(route.message, color = Color.Red)
-                    is RouteState.Active -> {
-                        Text(
-                            "Navigating to: ${route.destination.name}",
-                            color = Color.Green
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.75f), Color.Transparent)
                         )
-                        Text(
-                            "Step ${currentStepIndex + 1} / ${route.steps.size}",
+                    )
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                Column {
+                    // Location
+                    Text(
+                        text = currentNode?.name?.uppercase() ?: "NOT LOCALISED",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Route status
+                    when (val route = routeState) {
+                        is RouteState.Active -> Text(
+                            text = "NAVIGATING TO ${route.destination.name.uppercase()}  •  " +
+                                    "STEP ${currentStepIndex + 1} OF ${route.steps.size}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                        is RouteState.Reached -> Text(
+                            text = "✓  ARRIVED AT ${route.destination.name.uppercase()}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF00E676)
+                        )
+                        is RouteState.Error -> Text(
+                            text = route.message,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFF5252)
+                        )
+                        is RouteState.Idle -> Text(
+                            text = "SIGHTLINE",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
                     }
-                    is RouteState.Reached -> Text(
-                        "You have arrived at ${route.destination.name}!",
-                        color = Color.Green
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            /**
-             * Hint state feedback
-             */
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            ) {
-                when (val state = hintState) {
-                    is HintState.Idle -> {}
-                    is HintState.Loading -> Text("Thinking...", color = Color.White)
-                    is HintState.Success -> Text(state.text, color = Color.White)
-                    is HintState.Error -> Text("Error: ${state.message}", color = Color.Red)
+            // ── Gemini response card — centre screen ──────────────────────
+            when (val state = hintState) {
+                is HintState.Loading -> Box(
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(48.dp),
+                        strokeWidth = 4.dp
+                    )
                 }
+                is HintState.Success -> Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 24.dp)
+                        .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(12.dp))
+                        .padding(20.dp)
+                ) {
+                    Text(
+                        text = state.text,
+                        fontSize = 20.sp,
+                        lineHeight = 28.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                is HintState.Error -> Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 24.dp)
+                        .background(Color(0xFFB71C1C).copy(alpha = 0.9f), RoundedCornerShape(12.dp))
+                        .padding(20.dp)
+                ) {
+                    Text(
+                        text = state.message,
+                        fontSize = 20.sp,
+                        color = Color.White
+                    )
+                }
+                else -> {}
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
+            // ── Dark scrim at bottom for buttons ──────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                        )
+                    )
+                    .padding(bottom = 32.dp, top = 40.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Bottom-left — Describe surroundings (Use case 1)
+                    LargeAccessibleButton(
+                        label = "DESCRIBE",
+                        icon = "👁",
+                        enabled = !isLoading,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        onClick = {
+                            val capture = imageCaptureRef.value ?: return@LargeAccessibleButton
+                            capture.takePicture(
+                                ContextCompat.getMainExecutor(this@MainActivity),
+                                object : ImageCapture.OnImageCapturedCallback() {
+                                    override fun onCaptureSuccess(image: ImageProxy) {
+                                        val bitmap = image.toBitmap()
+                                        image.close()
+                                        vibrate()
+                                        navigationViewModel.describeEnvironment(bitmap, routeContext)
+                                    }
 
-                Text(
-                    text = currentNode?.name ?: "No location",
-                    color = Color.White
-                )
+                                    override fun onError(e: ImageCaptureException) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                            )}
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                /**
-                 * Button for sending image to API with no query
-                 */
-                Button(onClick = {
-                    val capture = imageCaptureRef.value ?: return@Button
-                    capture.takePicture(
-                        ContextCompat.getMainExecutor(this@MainActivity),
-                        object : ImageCapture.OnImageCapturedCallback() {
-                            override fun onCaptureSuccess(image: ImageProxy) {
-                                val bitmap = image.toBitmap()
-                                image.close()
-                                vibrate()
-                                navigationViewModel.describeEnvironment(bitmap, routeContext)
+                    // Bottom-centre — Where to go (Use case 3)
+                    LargeAccessibleButton(
+                        label = "NAVIGATE",
+                        icon = "🧭",
+                        enabled = !isLoading,
+                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Where do you want to go?")
                             }
-
-                            override fun onError(e: ImageCaptureException) {
-                                e.printStackTrace()
-                            }
+                            destinationSttLauncher.launch(intent)
                         }
                     )
-                },
-                    enabled = !isLoading
-                ) {
-                    Text("Describe Surroundings")
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                /**
-                 * Button for sending speech-to-text queries to API
-                 */
-                Button(onClick = {
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                        putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask a question")
-                    }
-                    sttLauncher.launch(intent)
-                },
-                    enabled = !isLoading
-                ) {
-                    Text("Ask a question")
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                /**
-                 * Button used when asking for a route
-                 */
-                Button(onClick = {
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                        putExtra(RecognizerIntent.EXTRA_PROMPT, "Where do you want to go?")
-                    }
-                    destinationSttLauncher.launch(intent)
-                },
-                    enabled = !isLoading
-                ) {
-                    Text("Where do you want to go?")
+                    // Bottom-right — Ask a question (Use case 2)
+                    LargeAccessibleButton(
+                        label = "ASK",
+                        icon = "🎤",
+                        enabled = !isLoading,
+                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                        onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask a question")
+                            }
+                            sttLauncher.launch(intent)
+                        }
+                    )
                 }
             }
         }
 
+    }
+
+    @Composable
+    fun LargeAccessibleButton(
+        label: String,
+        icon: String,
+        enabled: Boolean,
+        modifier: Modifier = Modifier,
+        onClick: () -> Unit
+    ) {
+        Button(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier.height(80.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White.copy(alpha = 0.15f),
+                disabledContainerColor = Color.White.copy(alpha = 0.05f)
+            ),
+            border = BorderStroke(
+                width = 2.dp,
+                color = if (enabled) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.2f)
+            ),
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(text = icon, fontSize = 24.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = label,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.5.sp,
+                    color = if (enabled) Color.White else Color.White.copy(alpha = 0.3f)
+                )
+            }
+        }
     }
 
     /**
