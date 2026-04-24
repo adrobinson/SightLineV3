@@ -144,9 +144,32 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        LaunchedEffect(currentNode) {
+            if (currentNode != null && routeState is RouteState.Idle) {
+                tts.speak("You are at ${currentNode!!.name}", TextToSpeech.QUEUE_FLUSH, null, "localise_utterance")
+            }
+        }
+
+        LaunchedEffect(routeState) {
+            when (val route = routeState) {
+                is RouteState.Active  -> tts.speak(
+                    "Navigating to ${route.destination.name}",
+                    TextToSpeech.QUEUE_FLUSH, null, "route_utterance"
+                )
+                is RouteState.Error   -> tts.speak(
+                    route.message,
+                    TextToSpeech.QUEUE_FLUSH, null, "route_utterance"
+                )
+                is RouteState.Reached -> tts.speak(
+                    "You have arrived at ${route.destination.name}",
+                    TextToSpeech.QUEUE_FLUSH, null, "route_utterance"
+                )
+                else -> {}
+            }
+        }
 
         /**
-         * Build route context string from current state
+         * Build route context string fr om current state
          */
         val routeContext = when (val route = routeState) {
             is RouteState.Active -> {
@@ -166,6 +189,7 @@ class MainActivity : ComponentActivity() {
             graphViewModel.checkpointReached.collect { step ->
                 if(navigationViewModel.hintState.value is HintState.Loading) return@collect
                 graphViewModel.advanceStep(step.id)
+                tts.speak("${step.name} seen", TextToSpeech.QUEUE_FLUSH, null, "qr_utterance")
                 val capture = imageCaptureRef.value ?: return@collect
                 val routeContext = "Scanned Entrance To ${step.name}" +
                         ", Visual description: ${step.description}"
