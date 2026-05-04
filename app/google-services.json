@@ -1,3 +1,48 @@
 {
-  "Replace this file": "TRUE"
+  "project_info": {
+    "project_number": "735548884604",
+    "project_id": "geminitest-7d713",
+    "storage_bucket": "geminitest-7d713.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735548884604:android:c9beafc295659689b0abf9",
+        "android_client_info": {
+          "package_name": "com.example.sightlinev3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNpyh02WBnLtCQwulpcm8vCqgWJCKQOm4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735548884604:android:a8b9771f354217dfb0abf9",
+        "android_client_info": {
+          "package_name": "com.example.testing"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNpyh02WBnLtCQwulpcm8vCqgWJCKQOm4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }
