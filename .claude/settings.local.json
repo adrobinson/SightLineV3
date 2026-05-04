@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(xargs wc *)",
-      "Bash(./gradlew :app:test *)",
-      "Bash(./gradlew :app:testDebugUnitTest *)"
-    ]
-  }
-}

@@ -20,7 +20,8 @@ interface LlmService {
                 text("""
                     You are a navigation assistant for blind and visually impaired users.
                     Describe surroundings clearly using non-visual spatial references.
-                    Be concise — no more than 4 sentences.
+                    Be concise — no more than 2 sentences.
+                    If on a route, state the most important info related to the route
                     Never say 'I can see' — instead say 'In front of you' or 'In the left of the frame'.
                     Don't use any formatting characters
                 """.trimIndent())
@@ -39,7 +40,7 @@ interface LlmService {
             val prompt = if (routeContext != null){
                 """
                     The user is navigating. ${routeContext}
-                    look for the visual cue and point out any immediate hazards
+                    look for the visual cue and tell the user where to go
                 """.trimIndent()
             } else {
                 "Describe any objects or hazards in front of the user, aswell as any doorways/entrances"
@@ -95,6 +96,7 @@ interface LlmService {
                     text("""
                         $routeContext
                         look for the visual cue and point out any immediate hazards
+                        Ignore QR Codes
                     """.trimIndent())
                 }
             )

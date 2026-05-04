@@ -2,14 +2,15 @@
   "nodes": {
     "01": { "id": "01", "name": "Adams Bedroom", "type": "room", "aliases": ["adam's room", "adams room", "bedroom a", "my room"] },
     "02": { "id": "02", "name": "Upstairs Landing", "type": "hallway", "aliases": ["landing", "upstairs", "upstairs hallway"] },
-    "03": { "id": "03", "name": "Parents Bedroom", "type": "room", "aliases": ["parents room", "mum and dads room", "main bedroom"]},
+    "03": { "id": "03", "name": "Parents Bedroom", "type": "room", "aliases": ["parents room", "mum and dads room", "main bedroom"] },
     "04": { "id": "04", "name": "Spare Bedroom", "type": "room", "aliases": ["spare room", "guest room", "bedroom c"] },
-    "06": { "id": "06", "name": "Downstairs Hallway", "type": "hallway",  "aliases": ["hallway", "downstairs", "front hallway"] },
+    "05": { "id": "05", "name": "Top of Stairs", "type": "hallway", "aliases": ["top of stairs", "staircase top", "top of the stairs"] },
+    "06": { "id": "06", "name": "Downstairs Hallway", "type": "hallway", "aliases": ["hallway", "downstairs", "front hallway"] },
     "07": { "id": "07", "name": "Kitchen", "type": "room", "aliases": ["the kitchen"] },
     "08": { "id": "08", "name": "Living Room", "type": "room", "aliases": ["lounge", "the living room", "front room", "sitting room"] }
   },
   "edges": [
-    { "from": "01", "to": "02", "description": "White door with clothes hung on door" },
+    { "from": "01", "to": "02", "description": "White door with clothes hung on door is the exit" },
     { "from": "02", "to": "01", "description": "White door with 'Bedroom_A' QR code" },
 
     { "from": "02", "to": "03", "description": "White door with 'Bedroom_B' QR code" },
@@ -18,8 +19,11 @@
     { "from": "02", "to": "04", "description": "White door with 'Bedroom_C' QR code" },
     { "from": "04", "to": "02", "description": "White door with 'Landing' QR code" },
 
-    { "from": "02", "to": "06", "description": "Cream staircase with white bannister leading down" },
-    { "from": "06", "to": "02", "description": "Stairs leading up with cream carpet and white bannister" },
+    { "from": "02", "to": "05", "description": "Top of staircase, white bannister surrounding" },
+    { "from": "05", "to": "02", "description": "cream floor with white doors surrounding" },
+
+    { "from": "05", "to": "06", "description": "Cream staircase with white bannister leading down" },
+    { "from": "06", "to": "05", "description": "Stairs leading up with cream carpet and white bannister" },
 
     { "from": "06", "to": "07", "description": "White door with 'Kitchen' QR code" },
     { "from": "07", "to": "06", "description": "White door with 'Hallway' QR code" },
